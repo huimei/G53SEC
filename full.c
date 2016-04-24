@@ -10,7 +10,7 @@
 
 char* encryptSubs(char*, int);
 char* decryptSubs(char*, int);
-char* encryptTransp(char*, int);
+char* encryptTransp(char*, int, int[]);
 char* decryptTransp(char*, int, int []);
 
 int main(void){
@@ -67,17 +67,29 @@ int main(void){
 		}else if((choice[0]=='t') && (choice[1]=='e')){
 		    int blockSize = BLOCK;
 
+		    printf("\n");
 			puts("Please input text for encryption ->");
 			gets(str);
 
+			int permutations[blockSize];
             char encryptText[strlen(str)];
-			strcpy(encryptText, encryptTransp(str, blockSize));
+
+			strcpy(encryptText, encryptTransp(str, blockSize, permutations));
 			printf("\n");
 			printf("Encrypted text: %s", encryptText);
+			printf("\n");
+
+			int size = blockSize * (ceil((float)strlen(str)/(float)blockSize));
+			char decryptText[size];
+
+			strcpy(decryptText, decryptTransp(encryptText, blockSize, permutations));
+			printf("\n");
+			printf("Decrypted text: %s", decryptText);
 			printf("\n");
 		} else if((choice[0]=='t') && (choice[1]=='d')){
 		    int blockSize = BLOCK;
 
+		    printf("\n");
 			puts("Please input text for decryption ->");
 			gets(str);
 
@@ -90,7 +102,9 @@ int main(void){
                 permutations[i] = temp;
             }
 
-            char decryptText[strlen(str)];
+            int size = blockSize * (ceil((float)strlen(str)/(float)blockSize));
+            char decryptText[size];
+
 			strcpy(decryptText, decryptTransp(str, blockSize, permutations));
 			printf("Decrypted text: %s", decryptText);
 			printf("\n");
@@ -98,7 +112,9 @@ int main(void){
 		} else if((choice[0]=='p') && (choice[1]=='e')){
 		    int shift = SHIFT;
 		    int blockSize = BLOCK;
+		    int permutations [blockSize];
 
+		    printf("\n");
 			puts("Please input text for encryption ->");
 			gets(str);
 
@@ -107,14 +123,24 @@ int main(void){
             char encryptText[size];
 
             strcpy(encryptSubst, encryptSubs(str, shift));
-			strcpy(encryptText, encryptTransp(encryptSubst, blockSize));
+			strcpy(encryptText, encryptTransp(encryptSubst, blockSize, permutations));
 			printf("\n");
 			printf("Encrypted text: %s", encryptText);
+			printf("\n");
+
+			char decryptTrans[strlen(str)];
+            char decryptText[size];
+
+            strcpy(decryptTrans, decryptTransp(encryptText, blockSize, permutations));
+			strcpy(decryptText, decryptSubs(decryptTrans, shift));
+			printf("\n");
+			printf("Decrypted text: %s", decryptText);
 			printf("\n");
 		} else if((choice[0]=='p') && (choice[1]=='d')){
 		    int shift = SHIFT;
 		    int blockSize = BLOCK;
 
+		    printf("\n");
 			puts("Please input text for decryption ->");
 			gets(str);
 
@@ -210,12 +236,11 @@ char* decryptSubs(char *str, int shift){
     return str;
 }
 
-char* encryptTransp(char*str, int blockSize){
+char* encryptTransp(char*str, int blockSize, int permutations [BLOCK]){
 	int length = strlen(str);
 	int columns = blockSize;
 	int rows = (int)(ceil((float)length/(float)columns));
 
-	int permutations[columns];
 	int permutationSequence[columns];
 
 	char cipherBlock[columns][rows];
