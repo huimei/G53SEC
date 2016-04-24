@@ -200,6 +200,7 @@ char* encryptSubs(char *str, int shift) {
             }
         }
     }
+
     return str;
 }
 
@@ -233,10 +234,12 @@ char* decryptSubs(char *str, int shift){
             }
         }
     }
+
     return str;
 }
 
 char* encryptTransp(char*str, int blockSize, int permutations [BLOCK]){
+
 	int length = strlen(str);
 	int columns = blockSize;
 	int rows = (int)(ceil((float)length/(float)columns));
@@ -260,11 +263,13 @@ char* encryptTransp(char*str, int blockSize, int permutations [BLOCK]){
             break;
         }
 
+        int n = 'a';
+
         for (x = 0; x < columns; x++){
             if (i < length){
                 cipherBlock[x][y] = str[i];
             } else{
-                cipherBlock[x][y] = '@';
+                cipherBlock[x][y] = n++;
             }
             i++;
             printf("%c", cipherBlock[x][y]);
@@ -319,6 +324,8 @@ char* encryptTransp(char*str, int blockSize, int permutations [BLOCK]){
 			i++;
 		}
 	}
+
+	printf("In function encrypt text: %s\n", str);
 	return str;
 }
 
@@ -351,6 +358,8 @@ char* decryptTransp(char*str, int blockSize, int permutations[BLOCK]){
 			i++;
 		}
 	}
+
+    printf("In function decrypt text: %s\n", str);
 	return str;
 }
 

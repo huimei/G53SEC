@@ -105,11 +105,9 @@ void encrypt(char*str){
 
 			for(j = 0; j < columns; j++){
 
-				if(permutation == 0 && zero == 0){
-					zero=1;
-					break;
-				} else if(permutation == permutations[j]){
+                if(permutation == permutations[j]){
                     duplicate = 1;
+                    break;
 				}
 			}
 
