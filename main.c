@@ -107,21 +107,21 @@ char * encryptSub(char * str) {
     for(i = 0; i < length; i++){
         if (str[i] == ' '){
             str[i] = str[i];
-        } else if(str[i]>=48 && str[i]<=57){
+        } else if(str[i]>=48 && str[i]<=57){ // 0 - 9
             str[i] = str[i] + SHIFT;
             if(str[i]>57){
                 str[i] = 48 + (str[i] - 58);
             }else{
                 str[i] = str[i];
             }
-        } else if(str[i]>=65 && str[i]<=90){
+        } else if(str[i]>=65 && str[i]<=90){ // A - Z
             str[i] = str[i] + SHIFT;
             if(str[i]>90){
                 str[i] = 65 + (str[i] - 91);
             }else{
                 str[i] = str[i];
             }
-        } else if(str[i]>=97 && str[i]<=122){
+        } else if(str[i]>=97 && str[i]<=122){ // a - z
             str[i] = str[i] + SHIFT;
             if(str[i]>122){
                 str[i] = 97 + (str[i] - 123);
