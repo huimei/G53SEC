@@ -61,7 +61,7 @@ void encrypt(char*str){
 
 	char cipherBlock[columns][rows];
 
-	int x,y,i,j,zero;
+	int x,y,i,j;
 
 	printf("\nLength = %d\n", length);
 	printf("Columns = %d\n", columns);
@@ -91,7 +91,6 @@ void encrypt(char*str){
 
 	i = 0;
 	j = 0;
-	zero = 0;
 
 	printf("\nKey sequence:\n");
 	for(i = 0; i < columns; i++){
