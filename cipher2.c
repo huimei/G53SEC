@@ -76,11 +76,13 @@ void encrypt(char*str){
             break;
         }
 
+        int n = 'a';
+
         for (x = 0; x < columns; x++){
             if (i < length){
                 cipherBlock[x][y] = str[i];
             } else{
-                cipherBlock[x][y] = '@';
+                cipherBlock[x][y] = n++;
             }
             i++;
             printf("%c", cipherBlock[x][y]);
