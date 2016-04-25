@@ -11,7 +11,8 @@
 #define BLOCK 8
 
 char * encryptSub(char *);
-char * decryptSub(char *);
+char * decryptSub(char *, int);
+int decryptSubNoKey(char *);
 char * encryptTransp(char *, int[]);
 char * decryptTransp(char *, int[]);
 void allEncrypt(char *, int[]);
@@ -37,29 +38,30 @@ void dispMenu() {
 
 int main(int argc, char * argv[]) {
     dispMenu();
-
+    
     char opt[INSIZE];
     char str[STRSIZE];
     char filename[INSIZE];
     srand((int)time(NULL));
-
+    
     if (scanf("%s %s", opt, filename) < 0)
     {
         printf("Invalid arguments.\n");
         exit(1);
     }
-
+    
     if (strcmp(opt, "SE") == 0) {
         readFile(filename, str);
         char encryptText[strlen(str)];
         strcpy(encryptText, encryptSub(str));
         printf("Encrypted text: %s\n", encryptText);
-        printf("Decrypted text: %s\n", decryptSub(encryptText));
+        printf("Decrypted text: %s\n", decryptSub(encryptText, SHIFT));
     } else if (strcmp(opt,"SD") == 0) {
         readFile(filename, str);
         char decryptText[strlen(str)];
-        strcpy(decryptText, decryptSub(str));
-        printf("Decrypted text: %s\n",decryptText);
+        int key = decryptSubNoKey(str);
+        strcpy(decryptText, str);
+        printf("Key: %d\nDecrypted text: %s\n",key, decryptText);
     } else if (strcmp(opt,"TE") == 0) {
         readFile(filename, str);
         char encryptText[strlen(str)];
@@ -70,7 +72,7 @@ int main(int argc, char * argv[]) {
     } else if (strcmp(opt,"TD") == 0) {
         readFile(filename, str);
         char decryptText[strlen(str)];
-        int permutations[BLOCK]; // for cba.txt only //4,5,6,1,0,7,3,2
+        int permutations[BLOCK] = {4,5,6,1,0,7,3,2}; // for cba.txt only
         strcpy(decryptText, decryptTransp(str, permutations));
         printf("Decrypted text: %s\n", decryptText);
     } else if (strcmp(opt, "PE") == 0) {
@@ -79,12 +81,12 @@ int main(int argc, char * argv[]) {
         int permutations[BLOCK];
         strcpy(encryptText, encryptTransp(encryptSub(str), permutations));
         printf("Encrypted text: %s\n", encryptText);
-        printf("Decrypted text: %s\n", decryptSub(decryptTransp(encryptText, permutations)));
+        printf("Decrypted text: %s\n", decryptSub(decryptTransp(encryptText, permutations), SHIFT));
     } else if (strcmp(opt, "PD") == 0) {
         readFile(filename, str);
         char decryptText[strlen(str)];
-        int permutations[BLOCK]; // for prodcba.txt only // = {5,6,7,1,0,3,2,4}
-        strcpy(decryptText, decryptSub(decryptTransp(str, permutations)));
+        int permutations[BLOCK] = {5,6,7,1,0,3,2,4}; // for prodcba.txt only
+        strcpy(decryptText, decryptSub(decryptTransp(str, permutations), SHIFT));
         printf("Decrypted text: %s\n", decryptText);
     } else if (strcmp(opt, "AE") == 0) {
         readFile(filename, str);
@@ -133,28 +135,28 @@ char * encryptSub(char * str) {
     return str;
 }
 
-char * decryptSub(char * str){
+char * decryptSub(char * str, int shift){
     size_t length = strlen(str);
     int i;
     for(i = 0; i < length; i++){
         if (str[i] == ' '){
             str[i] = str[i];
         } else if(str[i]>=48 && str[i]<=57){
-            str[i] = str[i] - SHIFT;
+            str[i] = str[i] - shift;
             if(str[i]<48){
                 str[i] = 58 - (48 - str[i]);
             }else{
                 str[i] = str[i];
             }
         } else if(str[i]>=65 && str[i]<=90){
-            str[i] = str[i] - SHIFT;
+            str[i] = str[i] - shift;
             if(str[i]<65){
                 str[i] = 91 + (65 - str[i]);
             }else{
                 str[i] = str[i];
             }
         } else if(str[i]>=97 && str[i]<=122){
-            str[i] = str[i] - SHIFT;
+            str[i] = str[i] - shift;
             if(str[i]<97){
                 str[i] = 123 - (97 - str[i]);
             }else{
@@ -165,25 +167,44 @@ char * decryptSub(char * str){
     return str;
 }
 
+int decryptSubNoKey(char * str) {
+    size_t length = strlen(str);
+    int i,found = 0;
+    char str2[length];
+    
+    for (i = 0; i < 26; i++) {
+        strcpy(str2, str);
+        decryptSub(str2, i);
+        int j;
+        for (j = 0; j < length-8; j++) {
+            if (str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
+                && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r')
+                found = 1;
+        }
+        if (found) break;
+    }
+    strcpy(str, str2);
+    return i;
+}
 
 char * encryptTransp(char * str, int permutations[BLOCK]){
     int length = (int) strlen(str);
     int columns = BLOCK;
     int rows = (int)(ceil((float)length/(float)columns));
-
+    
     int permutationSequence[columns];
-
+    
     char cipherBlock[columns][rows];
-
+    
     int x,y,i,j,zero;
-
+    
     printf("Length = %d\n", length);
     printf("Columns = %d\n", columns);
     printf("Rows = %d\n", rows);
-
+    
     i = 0;
     y = 0;
-
+    
     printf("\nPlain text in matrix:\n");
     while(1){ // loop by row
         if (y == rows){
@@ -202,11 +223,11 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
         y++;
         printf("\n");
     }
-
+    
     i = 0;
     j = 0;
     zero = 0;
-
+    
     printf("\nKey sequence:\n");
     for(i = 0; i < columns; i++){
         int duplicate;
@@ -215,7 +236,7 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
         while(1){
             duplicate=0;
             permutation = rand() % columns; // 0 to 7
-
+            
             for(j = 0; j < columns; j++){
                 if(permutation == 0 && zero == 0){
                     zero=1;
@@ -224,7 +245,7 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
                     duplicate = 1;
                 }
             }
-
+            
             if(duplicate==0){
                 permutations[i] = permutation;
                 permutationSequence[permutation] = i;
@@ -235,11 +256,11 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
         printf("%d ", permutations[i]);
     }
     printf("\n");
-
+    
     i = 0;
     x = 0;
     y = 0;
-
+    
     for(x = 0; x < columns; x++){
         for(y = 0; y < rows; y++){
             str[i] = cipherBlock[permutationSequence[x]][y];
@@ -254,13 +275,13 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
     int length = (int)strlen(str);
     int columns = BLOCK;
     int rows = (int)(ceil((float)length/(float)columns));
-
+    
     char cipherBlock[columns][rows];
-
+    
     int x,y,i;
-
+    
     i = 0;
-
+    
     printf("\nCipher text in matrix:\n");
     for(x = 0; x < columns; x++){
         for(y = 0; y < rows; y++){
@@ -270,9 +291,9 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
         }
         printf("\n");
     }
-
+    
     i = 0;
-
+    
     for(y = 0; y < rows; y++){
         for(x = 0; x < columns; x++){
             str[i] = cipherBlock[permutations[x]][y];
@@ -286,11 +307,11 @@ void allEncrypt(char * str, int permutations[BLOCK]) {
     char str1[strlen(str)];
     char str2[strlen(str)];
     char str3[strlen(str)];
-
+    
     strcpy(str1, str);
     strcpy(str2, str);
     strcpy(str3, str);
-
+    
     // sub
     printf("Substitution cipher encrypted text: %s\n\n", encryptSub(str1));
     // transp
@@ -302,7 +323,7 @@ void allEncrypt(char * str, int permutations[BLOCK]) {
 }
 
 void allDecrypt(char * str, int permutations[BLOCK]) {
-
+    
 }
 
 void readFile(const char * filename, char * str) {
@@ -311,15 +332,15 @@ void readFile(const char * filename, char * str) {
     char *buffer;
     fp = fopen (filename,"r");
     if(!fp) perror(filename),exit(1);
-
+    
     fseek(fp,0L,SEEK_END);
     length = ftell(fp);
     rewind( fp );
-
+    
     //allocate memory
     buffer = calloc( 1, length+1 );
     if( !buffer ) fclose(fp),fputs("memory alloc failed",stderr),exit(1);
-
+    
     // copy file into buffer
     if( 1!=fread( buffer , length, 1 , fp) )
         fclose(fp),free(buffer),fputs("read failed",stderr),exit(1);
