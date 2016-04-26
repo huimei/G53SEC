@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #define STRSIZE 4096
 #define SHIFT 3
@@ -65,7 +66,7 @@ int main(int argc, char * argv[]) {
         readFile(filename, str);
         char decryptText[strlen(str)];
         int key = decryptSubNoKey(str);
-        strcpy(decryptText, str);
+        strcpy(decryptText, decryptSub(str, key));
         printf("Key: %d\nDecrypted text: %s\n",key, decryptText);
     } else if (strcmp(opt,"TE") == 0) { // Transp encrypt
         readFile(filename, str);
@@ -184,24 +185,132 @@ char * decryptSub(char * str, int shift){
     return str;
 }
 
-int decryptSubNoKey(char * str) {
-    size_t length = strlen(str);
-    int i,found = 0;
-    char str2[length];
+int decryptSubNoKey(char * string) {
+    char str[STRSIZE];
+    size_t length = strlen(string);
+    int l;
 
-    for (i = 0; i < 26; i++) {
-        strcpy(str2, str);
-        decryptSub(str2, i);
-        int j;
-        for (j = 0; j < length-8; j++) {
-            if (str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
-                && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r')
-                found = 1;
-        }
-        if (found) break;
+    for (l=0; l<length; l++){
+        str[l] = tolower(string[l]);
     }
-    strcpy(str, str2);
-    return i;
+
+    printf("Length: %d\n", length);
+
+    //Calculate frequency of each character
+    int count[26] = {0};
+    int i = 0;
+
+    while (str[i] != '\0') {
+        if (str[i] >= 'a' && str[i] <= 'z' ){
+            count[str[i]-'a']++;
+        }
+        i++;
+    }
+
+    //Get the highest count character
+    int highest, position;
+    char highestAlph;
+    i = 0;
+
+    highest = count[i];
+
+    for (i = 0; i < 26; i++){
+        if (count[i] > highest){
+            highest = count[i];
+            position = i;
+        }
+    }
+
+    highestAlph = position + 'a';
+
+    printf("Highest frequency: %d\n", highest);
+    printf("Highest frequency letter: %c\n", highestAlph);
+
+    //Calculate number of words in string
+    int wordCount = 0;
+
+    for (i = 0; str[i] != '\0'; i++){
+        if (str[i] == ' '){
+            wordCount++;
+        }
+    }
+    wordCount = wordCount + 1;
+    printf("Number of words: %d\n", wordCount);
+
+    //Break string into array of words
+    char *array[wordCount];
+    char s[length];
+
+    strcpy(s, str);
+    i = 0;
+
+    array[i] = strtok(s," ");
+
+    while(array[i]!=NULL){
+        array[++i] = strtok(NULL," ");
+    }
+
+    int j;
+    int lengthFive = 0;
+
+    //Get how many words have length of 8
+    for (j = 0; j < wordCount; j++){
+        if (strlen(array[j])==8){
+            lengthFive ++;
+        }
+    }
+
+    char *stringFive [lengthFive];
+    i = 0;
+
+    //Copy word with length of 8 to new array
+    for (j = 0; j < wordCount; j++){
+        if (strlen(array[j])==8){
+            stringFive[i] = array[j];
+            i++;
+        }
+    }
+
+    char alphabet[26] = {'e','t','a','o','i','n','s','h','r','d','l','c','u','m','w','f','g','y','p','b','v','k','j','x','q','z'};
+    int key = 0;
+    char tmp[8];
+    bool flag = false;
+
+    for (i=0; i<26; i++){
+
+        key = (int)highestAlph - alphabet[i];
+
+        if (key < 0){
+            key = key + 26;
+        }else{
+            key = key;
+        }
+
+        for (j=0; j<lengthFive; j++){
+            strcpy(tmp, stringFive[j]);
+
+            int z;
+            for (z=0; z<8; z++){
+                tmp[z] = tmp[z] - key;
+                if(tmp[z]<97){
+                    tmp[z] = 123 - (97 - tmp[z]);
+                }else{
+                    tmp[z] = tmp[z];
+                }
+            }
+
+            if ((strcmp("computer",tmp)==0) || (strcmp("security",tmp)==0)){
+                key = key;
+                flag = true;
+                break;
+            }
+        }
+        if (flag){
+            break;
+        }
+    }
+    printf("Number of trial and error: %d\n", i+1);
+    return key;
 }
 
 char * encryptTransp(char * str, int permutations[BLOCK]){

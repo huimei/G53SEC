@@ -410,7 +410,7 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
     int x,y,i;
 
     i = 0;
-    printf("\nCipher text in matrix:\n");
+    /*printf("\nCipher text in matrix:\n");
     for(x = 0; x < columns; x++){
         for(y = 0; y < rows; y++){
             cipherBlock[x][y] = str[i];
@@ -418,7 +418,7 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
             printf("%c", cipherBlock[x][y]);
         }
         printf("\n");
-    }
+    }*/
 
     i = 0;
 
@@ -445,6 +445,7 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
 
     for (i = 0; i < FAC8; i++) {
         strcpy(str2, str);
+
         decryptTransp(str2, permset[i]);
         printf("%d: %s\n", i, str2);
         int j;
@@ -457,12 +458,13 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
         }
         if (found) break;
     }
+
     strcpy(str, str2);
     return permset[i];
 }
 
-void permute(int * per, int i, int length)
-{
+void permute(int * per, int i, int length){
+
     int j;
     if (length == i) {
         // store to permset
