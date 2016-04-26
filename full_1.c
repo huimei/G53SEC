@@ -7,12 +7,12 @@
 #include <stdbool.h>
 
 #define STRSIZE 4096
-#define SHIFT 20
+#define SHIFT 41
 #define INSIZE 50
 #define BLOCK 8
 #define FAC8 40320
 
-char * encryptSub(char *);
+char * encryptSub(char *, int);
 char * decryptSub(char *, int);
 int decryptSubNoKey(char *);
 char * encryptTransp(char *, int[]);
@@ -59,7 +59,7 @@ int main(int argc, char * argv[]) {
     if (strcmp(opt, "SE") == 0) { // Sub encrypt
         readFile(filename, str);
         char encryptText[strlen(str)];
-        strcpy(encryptText, encryptSub(str));
+        strcpy(encryptText, encryptSub(str, SHIFT));
         printf("Encrypted text: %s\n", encryptText);
         printf("Decrypted text: %s\n", decryptSub(encryptText, SHIFT));
     } else if (strcmp(opt,"SD") == 0) { // Sub decrypt
@@ -92,7 +92,7 @@ int main(int argc, char * argv[]) {
         readFile(filename, str);
         char encryptText[strlen(str)];
         int permutations[BLOCK];
-        strcpy(encryptText, encryptTransp(encryptSub(str), permutations));
+        strcpy(encryptText, encryptTransp(encryptSub(str,SHIFT), permutations));
         printf("Encrypted text: %s\n", encryptText);
         printf("Decrypted text: %s\n", decryptSub(decryptTransp(encryptText, permutations), SHIFT));
     } else if (strcmp(opt, "PD") == 0) { // Prod decrypt
@@ -121,32 +121,31 @@ int main(int argc, char * argv[]) {
     return 0;
 }
 
-char * encryptSub(char * str) {
+char * encryptSub(char * str, int shift) {
     size_t length = strlen(str);
     int i;
+    shift = shift % 26;
     for(i = 0; i < length; i++){
         if (str[i] == ' '){
             str[i] = str[i];
         } else if(str[i]>=48 && str[i]<=57){ // 0 - 9
-            str[i] = str[i] + SHIFT;
+            int shf = shift % 10;
+            str[i] = str[i] + shf;
             if(str[i]>57){
-                str[i] = 48 + (str[i] - 58);
-            }else{
-                str[i] = str[i];
+                str[i] = (str[i] - 58) + 48;
             }
         } else if(str[i]>=65 && str[i]<=90){ // A - Z
-            str[i] = str[i] + SHIFT;
+            str[i] = str[i] + shift;
             if(str[i]>90){
-                str[i] = 65 + (str[i] - 91);
-            }else{
-                str[i] = str[i];
+                str[i] = (str[i] - 91) + 65;
             }
         } else if(str[i]>=97 && str[i]<=122){ // a - z
-            str[i] = str[i] + SHIFT;
-            if(str[i]>122){
-                str[i] = 97 + (str[i] - 123);
+            int tmp;
+            tmp = str[i] + shift;
+            if(tmp>122){
+                str[i] = (tmp - 123) + 97;
             }else{
-                str[i] = str[i];
+                str[i] = tmp;
             }
         }
     }
@@ -156,11 +155,13 @@ char * encryptSub(char * str) {
 char * decryptSub(char * str, int shift){
     size_t length = strlen(str);
     int i;
+    shift = shift % 26;
     for(i = 0; i < length; i++){
         if (str[i] == ' '){
             str[i] = str[i];
         } else if(str[i]>=48 && str[i]<=57){
-            str[i] = str[i] - shift;
+            int shf = shift % 10;
+            str[i] = str[i] - shf;
             if(str[i]<48){
                 str[i] = 58 - (48 - str[i]);
             }else{
@@ -169,7 +170,7 @@ char * decryptSub(char * str, int shift){
         } else if(str[i]>=65 && str[i]<=90){
             str[i] = str[i] - shift;
             if(str[i]<65){
-                str[i] = 91 + (65 - str[i]);
+                str[i] = 91 - (65 - str[i]);
             }else{
                 str[i] = str[i];
             }
@@ -410,17 +411,6 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
     int x,y,i;
 
     i = 0;
-    /*printf("\nCipher text in matrix:\n");
-    for(x = 0; x < columns; x++){
-        for(y = 0; y < rows; y++){
-            cipherBlock[x][y] = str[i];
-            i++;
-            printf("%c", cipherBlock[x][y]);
-        }
-        printf("\n");
-    }*/
-
-    i = 0;
 
     for(y = 0; y < rows; y++){
         for(x = 0; x < columns; x++){
@@ -444,9 +434,8 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
     permute(permutations, 0, BLOCK);
 
     for (i = 0; i < FAC8; i++) {
-        strcpy(str2, str);
+        strcpy(str2, decryptTransp(str2, permset[i]));
 
-        decryptTransp(str2, permset[i]);
         printf("%d: %s\n", i, str2);
         int j;
         for (j = 0; j < length-8; j++) { // find 'computer' or 'frpsxwhu' assumes that SHIFT is 3
@@ -502,7 +491,7 @@ void allEncrypt(char * str, int permutations[BLOCK]) {
     strcpy(str3, str);
 
     // sub
-    printf("------------SUBSTITUTION CIPHER-------------\n\nencrypted text: %s\n", encryptSub(str1));
+    printf("------------SUBSTITUTION CIPHER-------------\n\nencrypted text: %s\n", encryptSub(str1,SHIFT));
     printf("\ndecrypted text: %s\n\n", decryptSub(str1, SHIFT));
     printf("------------TRANSPOSITION CIPHER------------\n\n");
     // transp
@@ -512,7 +501,7 @@ void allEncrypt(char * str, int permutations[BLOCK]) {
     printf("---------------PRODUCT CIPHER---------------\n\n");
     // prod
     int permutations2[BLOCK];
-    printf("\nencrypted text: %s\n", encryptTransp(encryptSub(str3), permutations2));
+    printf("\nencrypted text: %s\n", encryptTransp(encryptSub(str3,SHIFT), permutations2));
     printf("\ndecrypted text: %s\n\n", decryptSub(decryptTransp(str3, permutations2), SHIFT));
 }
 
