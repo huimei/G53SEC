@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <math.h>
+#include <stdlib.h>
 
 #define MAXSIZE 1024
 #define ALPHA 26
