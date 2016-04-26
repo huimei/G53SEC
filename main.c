@@ -298,7 +298,7 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
     int x,y,i;
     
     i = 0;
-   printf("\nCipher text in matrix:\n");
+    printf("\nCipher text in matrix:\n");
     for(x = 0; x < columns; x++){
         for(y = 0; y < rows; y++){
             cipherBlock[x][y] = str[i];
@@ -320,7 +320,7 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
 }
 
 int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
-  
+    
     int i, found = 0;
     for (i = 0; i < BLOCK; i++) { // fill with 0-7
         permutations[i] = i;
@@ -328,7 +328,7 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
     size_t length = strlen(str);
     char str2[length];
     
-    // find n! combinations
+    // find n! permutations
     permute(permutations, 0, BLOCK);
     
     for (i = 0; i < FAC8; i++) {
@@ -336,12 +336,12 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
         decryptTransp(str2, permset[i]);
         printf("%d: %s\n", i, str2);
         int j;
-        for (j = 0; j < length-8; j++) { // find 'computer' or 'frpsxwhu' 
+        for (j = 0; j < length-8; j++) { // find 'computer' or 'frpsxwhu' assumes that SHIFT is 3
             if ((prod == 0 && str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
-                && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r' ) ||
+                 && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r' ) ||
                 (prod == 1 && str2[j]=='f' && str2[j+1]=='r' && str2[j+2]=='p' && str2[j+3]=='s'
-                && str2[j+4]=='x' && str2[j+5]=='w' && str2[j+6]=='h' && str2[j+7]=='u'))
-                    found = 1;
+                 && str2[j+4]=='x' && str2[j+5]=='w' && str2[j+6]=='h' && str2[j+7]=='u'))
+                found = 1;
         }
         if (found) break;
     }
