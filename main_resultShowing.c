@@ -63,34 +63,31 @@ int main(int argc, char * argv[]) {
         readFile(filename, str);
         char encryptText[strlen(str)];
         strcpy(encryptText, encryptSub(str, SHIFT));
-        printf("\n");
-        printf("Encrypted text:\n%s\n\n", encryptText);
-        printf("Decrypted text:\n%s\n\n", decryptSub(encryptText, SHIFT));
+        printf("Encrypted text: %s\n", encryptText);
+        printf("Decrypted text: %s\n", decryptSub(encryptText, SHIFT));
     } else if (strcmp(opt,"SD") == 0) { // Sub decrypt
         readFile(filename, str);
         char string [strlen(str)];
         strcpy(string,str);
 
-        printf("\n");
-        printf("Run with frequency analysis attack:\n");
         char decryptText1[strlen(str)];
         int key1 = decryptSubNoKey(string);
         strcpy(decryptText1, decryptSub(str,key1));
-        printf("Key: %d\n\nDecrypted text:\n%s\n\n",key1, decryptText1);
+        printf("Run with frequency analysis attack:\n");
+        printf("Key: %d\nDecrypted text: %s\n\n",key1, decryptText1);
 
-        printf("Run with exhaustive search attack:\n");
         char decryptText2[strlen(str)];
         int key2 = decryptSubNoKey2(string);
         strcpy(decryptText2, string);
-        printf("Key: %d\n\nDecrypted text:\n%s\n\n",key2, decryptText2);
+        printf("Run with exhaustive search attack:\n");
+        printf("Key: %d\nDecrypted text: %s\n",key2, decryptText2);
     } else if (strcmp(opt,"TE") == 0) { // Transp encrypt
         readFile(filename, str);
         char encryptText[strlen(str)];
         int permutations[BLOCK];
         strcpy(encryptText, encryptTransp(str, permutations));
-        printf("\n");
-        printf("Encrypted text:\n%s\n\n", encryptText);
-        printf("Decrypted text:\n%s\n\n", decryptTransp(encryptText, permutations));
+        printf("Encrypted text: %s\n", encryptText);
+        printf("Decrypted text: %s\n", decryptTransp(encryptText, permutations));
     } else if (strcmp(opt,"TD") == 0) { // Transp decrypt
         readFile(filename, str);
         char decryptText[strlen(str)];
@@ -98,28 +95,24 @@ int main(int argc, char * argv[]) {
         int * key = decryptTranspNoKey(str, permutations);
         strcpy(decryptText, str);
         int i;
-        printf("\n");
         printf("Permutations: ");
         for (i = 0; i < BLOCK; i++){
             printf("%d ", key[i]);
         }
-        printf("\n\n");
-        printf("Decrypted text:\n%s\n", decryptText);
+        printf("\nDecrypted text: %s\n", decryptText);
     } else if (strcmp(opt, "PE") == 0) { // Prod encrypt
         readFile(filename, str);
         char encryptText[strlen(str)];
         int permutations[BLOCK];
         strcpy(encryptText, encryptTransp(encryptSub(str, SHIFT), permutations));
-        printf("\n");
-        printf("Encrypted text:\n%s\n\n", encryptText);
-        printf("Decrypted text:\n%s\n\n", decryptSub(decryptTransp(encryptText, permutations), SHIFT));
+        printf("Encrypted text: %s\n", encryptText);
+        printf("Decrypted text: %s\n", decryptSub(decryptTransp(encryptText, permutations), SHIFT));
     } else if (strcmp(opt, "PD") == 0) { // Prod decrypt
         readFile(filename, str);
         char decryptText[strlen(str)];
         int permutations[BLOCK];
         strcpy(decryptText, decryptProdNoKey(str, permutations));
-        printf("\n");
-        printf("Decrypted text:\n%s\n\n", decryptText);
+        printf("\nDecrypted text: %s\n", decryptText);
 
     } else if (strcmp(opt, "AE") == 0) { // All encrypt & decrypt
         readFile(filename, str);
@@ -339,9 +332,7 @@ int decryptSubNoKey2(char * str) {
                 && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r')
                 found = 1;
         }
-        if (found){
-            break;
-        };
+        if (found) break;
     }
     strcpy(str, str2);
     printf("Number of runs: %d\n", i+1);
@@ -359,7 +350,6 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
 
     int x,y,i,j,zero;
 
-    printf("\n");
     printf("Length = %d\n", length);
     printf("Columns = %d\n", columns);
     printf("Rows = %d\n", rows);
@@ -367,8 +357,7 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
     i = 0;
     y = 0;
 
-    printf("\n");
-    printf("Plain text in matrix:\n");
+    printf("\nPlain text in matrix:\n");
     while(1){ // loop by row
         if (y == rows){
             break;
@@ -391,8 +380,7 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
     j = 0;
     zero = 0;
 
-    printf("\n");
-    printf("Key sequence:\n");
+    printf("\nKey sequence:\n");
     for(i = 0; i < columns; i++){
         int duplicate;
         int permutation;
@@ -478,6 +466,7 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK]) {
     for (i = 0; i < FAC8; i++) {
         strcpy(str2, str);
         decryptTransp(str2, permset[i]);
+        printf("%d: %s\n", i, str2);
         int j;
         for (j = 0; j < length-8; j++) { // find 'computer' or 'security'
             if ((str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
@@ -486,12 +475,8 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK]) {
                  && str2[j+4]=='r' && str2[j+5]=='i' && str2[j+6]=='t' && str2[j+7]=='y'))
                 found = 1;
         }
-        if (found){
-            break;
-        }
+        if (found) break;
     }
-    printf("\n");
-    printf("Number of runs: %d\n", i);
     strcpy(str, str2);
     return permset[i];
 }
@@ -535,7 +520,6 @@ char* decryptProdNoKey (char * string, int permutations[BLOCK]){
 
     highestAlph = position + 'a';
 
-    printf("\n");
     printf("Highest frequency: %d\n", highest);
     printf("Highest frequency letter: %c\n", highestAlph);
 
@@ -618,7 +602,7 @@ char* decryptProdNoKey (char * string, int permutations[BLOCK]){
     }
     strcpy(string,decryptTransp(string,permset[row]));
     decryptSub(string, key);
-    printf("Key found: %d\n", key);
+    printf("Key found: %d", key);
     printf("Number of runs: %d\n", run);
     return string;
 }
@@ -661,20 +645,19 @@ void allEncrypt(char * str, int permutations[BLOCK]) {
     strcpy(str2, str);
     strcpy(str3, str);
 
-    printf("\n");
     // sub
-    printf("------------SUBSTITUTION CIPHER-------------\n\nEncrypted text:\n%s\n", encryptSub(str1, SHIFT));
-    printf("\nDecrypted text:\n%s\n\n", decryptSub(str1, SHIFT));
-    printf("------------TRANSPOSITION CIPHER------------\n");
+    printf("------------SUBSTITUTION CIPHER-------------\n\nencrypted text: %s\n", encryptSub(str1, SHIFT));
+    printf("\ndecrypted text: %s\n\n", decryptSub(str1, SHIFT));
+    printf("------------TRANSPOSITION CIPHER------------\n\n");
     // transp
     int permutations1[BLOCK];
-    printf("\nEncrypted text:\n%s\n", encryptTransp(str2, permutations1));
-    printf("\nDecrypted text:\n%s\n\n", decryptTransp(str2, permutations1));
-    printf("---------------PRODUCT CIPHER---------------\n");
+    printf("\nencrypted text: %s\n", encryptTransp(str2, permutations1));
+    printf("\ndecrypted text: %s\n\n", decryptTransp(str2, permutations1));
+    printf("---------------PRODUCT CIPHER---------------\n\n");
     // prod
     int permutations2[BLOCK];
-    printf("\nEncrypted text:\n%s\n", encryptTransp(encryptSub(str3, SHIFT), permutations2));
-    printf("\nDecrypted text:\n%s\n\n", decryptSub(decryptTransp(str3, permutations2), SHIFT));
+    printf("\nencrypted text: %s\n", encryptTransp(encryptSub(str3, SHIFT), permutations2));
+    printf("\ndecrypted text: %s\n\n", decryptSub(decryptTransp(str3, permutations2), SHIFT));
 }
 
 void readFile(const char * filename, char * str) {
@@ -699,4 +682,5 @@ void readFile(const char * filename, char * str) {
     strcpy(str, buffer);
     free(buffer);
 }
+
 
