@@ -17,7 +17,7 @@ int decryptSubNoKey(char *); // frequency analysis
 int decryptSubNoKey2(char *); // exhaustive search
 char * encryptTransp(char *, int[]);
 char * decryptTransp(char *, int[]);
-int * decryptTranspNoKey(char *, int[], int);
+int * decryptTranspNoKey(char *, int[]);
 char * decryptProdNoKey (char *, int[]);
 void permute(int *, int, int);
 void swap(int *, int *);
@@ -82,7 +82,7 @@ int main(int argc, char * argv[]) {
         readFile(filename, str);
         char decryptText[strlen(str)];
         int permutations[BLOCK];// check {4,5,6,1,0,7,3,2} for cba.txt only
-        int * key = decryptTranspNoKey(str, permutations, 0);
+        int * key = decryptTranspNoKey(str, permutations);
         strcpy(decryptText, str);
         int i;
         printf("Key: ");
@@ -581,7 +581,7 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
     return str;
 }
 
-int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
+int * decryptTranspNoKey(char * str, int permutations[BLOCK]) {
     
     int i, found = 0;
     for (i = 0; i < BLOCK; i++) { // fill with 0-7
@@ -598,11 +598,11 @@ int * decryptTranspNoKey(char * str, int permutations[BLOCK], int prod) {
         decryptTransp(str2, permset[i]);
         printf("%d: %s\n", i, str2);
         int j;
-        for (j = 0; j < length-8; j++) { // find 'computer' or 'frpsxwhu' assumes that SHIFT is 3
-            if ((prod == 0 && str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
+        for (j = 0; j < length-8; j++) { // find 'computer' or 'security'
+            if ((str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
                  && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r' ) ||
-                (prod == 1 && str2[j]=='f' && str2[j+1]=='r' && str2[j+2]=='p' && str2[j+3]=='s'
-                 && str2[j+4]=='x' && str2[j+5]=='w' && str2[j+6]=='h' && str2[j+7]=='u'))
+                (str2[j]=='s' && str2[j+1]=='e' && str2[j+2]=='c' && str2[j+3]=='u'
+                 && str2[j+4]=='r' && str2[j+5]=='i' && str2[j+6]=='t' && str2[j+7]=='y'))
                 found = 1;
         }
         if (found) break;
