@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -6,20 +7,21 @@
 #include <ctype.h>
 
 #define STRSIZE 4096
-#define SHIFT 21
+#define SHIFT 3
 #define INSIZE 50
 #define BLOCK 8
-#define FAC8 40320
+#define FACMAX 362880
+#define BLOCKMAX 9
 
 char * encryptSub(char *, int);
 char * decryptSub(char *, int);
 int decryptSubNoKey(char *); // frequency analysis
 int decryptSubNoKey2(char *); // exhaustive search
 char * encryptTransp(char *, int[]);
-char * decryptTransp(char *, int[]);
-int * decryptTranspNoKey(char *, int[]);
-char * decryptProdNoKey (char *, int[]);
-void permute(int *, int, int);
+char * decryptTransp(char *, int[], int);
+int * decryptTranspNoKey(char *, int[], int);
+char * decryptProdNoKey (char *, int[], int);
+void permute(int *, int, int, int);
 void swap(int *, int *);
 void allEncrypt(char *, int[]);
 void readFile(const char *, char *);
@@ -27,7 +29,7 @@ void dispMenu();
 
 
 
-int permset[FAC8][BLOCK];
+int permset[FACMAX][BLOCKMAX];
 int k = 0;
 
 void dispMenu() {
@@ -92,20 +94,14 @@ int main(int argc, char * argv[]) {
         strcpy(encryptText, encryptTransp(str, permutations));
         printf("\n");
         printf("Encrypted text:\n%s\n\n", encryptText);
-        printf("Decrypted text:\n%s\n\n", decryptTransp(encryptText, permutations));
+        printf("Decrypted text:\n%s\n\n", decryptTransp(encryptText, permutations, BLOCK));
     } else if (strcmp(opt,"TD") == 0) { //Transp decrypt without key
         readFile(filename, str);
         char decryptText[strlen(str)];
-        int permutations[BLOCK];
-        int * key = decryptTranspNoKey(str, permutations);
+        int permutations[BLOCKMAX];
+        int blockSize;
+        int * key = decryptTranspNoKey(str, permutations, blockSize);
         strcpy(decryptText, str);
-        int i;
-        printf("\n");
-        printf("Permutations: ");
-        for (i = 0; i < BLOCK; i++){
-            printf("%d ", key[i]);
-        }
-        printf("\n\n");
         printf("Decrypted text:\n%s\n", decryptText);
     } else if (strcmp(opt, "PE") == 0) { //Prod encrypt
         readFile(filename, str);
@@ -114,12 +110,13 @@ int main(int argc, char * argv[]) {
         strcpy(encryptText, encryptTransp(encryptSub(str, SHIFT), permutations));
         printf("\n");
         printf("Encrypted text:\n%s\n\n", encryptText);
-        printf("Decrypted text:\n%s\n\n", decryptSub(decryptTransp(encryptText, permutations), SHIFT));
+        printf("Decrypted text:\n%s\n\n", decryptSub(decryptTransp(encryptText, permutations, BLOCK), SHIFT));
     } else if (strcmp(opt, "PD") == 0) { //Prod decrypt without key
         readFile(filename, str);
         char decryptText[strlen(str)];
-        int permutations[BLOCK];
-        strcpy(decryptText, decryptProdNoKey(str, permutations));
+        int permutations[BLOCKMAX];
+        int blockSize;
+        strcpy(decryptText, decryptProdNoKey(str, permutations, blockSize));
         printf("\n");
         printf("Decrypted text:\n%s\n\n", decryptText);
 
@@ -446,9 +443,9 @@ char * encryptTransp(char * str, int permutations[BLOCK]){
     return str;
 }
 
-char * decryptTransp(char * str, int permutations[BLOCK]){
+char * decryptTransp(char * str, int permutations[BLOCKMAX], int block){
     int length = (int)strlen(str);
-    int columns = BLOCK;
+    int columns = block;
     //Calculate number of rows needed
     int rows = (int)(ceil((float)length/(float)columns));
 
@@ -476,43 +473,76 @@ char * decryptTransp(char * str, int permutations[BLOCK]){
     return str;
 }
 
-int * decryptTranspNoKey(char * str, int permutations[BLOCK]) {
+int * decryptTranspNoKey(char * str, int permutations[BLOCKMAX], int blockSize) {
 
     int i, found = 0;
-    for (i = 0; i < BLOCK; i++) { //Fill with 0-7
-        permutations[i] = i;
-    }
+    int run = 0;
+
     size_t length = strlen(str);
     char str2[length];
 
-    //Find n! permutations
-    permute(permutations, 0, BLOCK);
+    int x;
 
-    //Loop through all possible combinations
-    for (i = 0; i < FAC8; i++) {
-        strcpy(str2, str);
-        //Decrypt cipher text based on selected combination in this run
-        decryptTransp(str2, permset[i]);
+    //Minimum block size allowed is 2, and maximum block size allowed is 9
+    for (x = 2; x <= 9; x++){
 
-        int j;
-        for (j = 0; j < length-8; j++) { //Find 'computer' or 'security'
-            if ((str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
-                 && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r' ) ||
-                (str2[j]=='s' && str2[j+1]=='e' && str2[j+2]=='c' && str2[j+3]=='u'
-                 && str2[j+4]=='r' && str2[j+5]=='i' && str2[j+6]=='t' && str2[j+7]=='y'))
-                found = 1;
+        int block = x;
+
+        for (i = 0; i < block; i++) { //Fill with 0-7
+            permutations[i] = i;
         }
+
+        int fac = 1;
+
+        int y;
+        //Calculate the factorial of selected block size
+        for (y = block; y > 0; y--){
+            fac *= y;
+        }
+
+        //Find n! permutations
+        permute(permutations, 0, block, fac);
+
+        //Loop through all possible combinations
+        for (i = 0; i < fac; i++) {
+            strcpy(str2, str);
+            //Decrypt cipher text based on selected combination in this run
+            decryptTransp(str2, permset[i], x);
+
+            int j;
+            for (j = 0; j < length-8; j++) { //Find 'computer' or 'security'
+                if ((str2[j]=='c' && str2[j+1]=='o' && str2[j+2]=='m' && str2[j+3]=='p'
+                    && str2[j+4]=='u' && str2[j+5]=='t' && str2[j+6]=='e' && str2[j+7]=='r' ) ||
+                    (str2[j]=='s' && str2[j+1]=='e' && str2[j+2]=='c' && str2[j+3]=='u'
+                    && str2[j+4]=='r' && str2[j+5]=='i' && str2[j+6]=='t' && str2[j+7]=='y'))
+                    found = 1;
+            }
+            run ++;
+            if (found){
+                break;
+            }
+        }
+        blockSize = x;
         if (found){
             break;
         }
     }
+
     printf("\n");
-    printf("Number of runs: %d\n", i);
+    printf("Number of runs: %d\n\n", run);
+    printf("Block size found: %d", blockSize);
+    printf("\n");
+    printf("Permutations: ");
+    int *perm = permset[i];
+    for (i = 0; i < blockSize; i++){
+        printf("%d ", perm[i]);
+    }
+    printf("\n\n");
     strcpy(str, str2);
     return permset[i];
 }
 
-char* decryptProdNoKey (char * string, int permutations[BLOCK]){
+char* decryptProdNoKey (char * string, int permutations[BLOCKMAX], int blockSize){
     size_t length = strlen(string);
     char str[STRSIZE];
     int l;
@@ -562,6 +592,8 @@ char* decryptProdNoKey (char * string, int permutations[BLOCK]){
     char tmp[strlen(str)];
     int flag = 0;
 
+    int x;
+
     for (i = 0; i < 26; i++){
 
         //Shift guessing start from the most frequent used character to the least
@@ -597,40 +629,57 @@ char* decryptProdNoKey (char * string, int permutations[BLOCK]){
             }
         }
 
+        //Minimum block size allowed is 2, and maximum block size allowed is 9
+        for (x = 2; x <= 9; x++){
 
-        for (z = 0; z < BLOCK; z++) { //Fill with 0-7
-            permutations[z] = z;
-        }
+            int block = x;
 
-        //Find n! permutations
-        permute(permutations, 0, BLOCK);
-
-        //Loop through all possible combinations
-        for (z = 0; z < FAC8; z++) {
-            strcpy(tmp, str);
-
-            //Decrypt cipher text using transposition with selected combination in this run
-            decryptTransp(tmp, permset[z]);
-
-            for (j = 0; j < length-8; j++) { //Find encrypted 'computer' or 'security' in text
-                if ((tmp[j]==string_1[0] && tmp[j+1]==string_1[1] && tmp[j+2]==string_1[2] && tmp[j+3]==string_1[3]
-                     && tmp[j+4]==string_1[4] && tmp[j+5]==string_1[5] && tmp[j+6]==string_1[6] && tmp[j+7]==string_1[7]) ||
-                    (tmp[j]==string_2[0] && tmp[j+1]==string_2[1] && tmp[j+2]==string_2[2] && tmp[j+3]==string_2[3]
-                     && tmp[j+4]==string_2[4] && tmp[j+5]==string_2[5] && tmp[j+6]==string_2[6] && tmp[j+7]==string_2[7])){
-                        key = key;
-                        flag = 1;
-                        break;
-                    }
+            for (z = 0; z < block; z++) { //Fill with 0-7
+                permutations[z] = z;
             }
+
+            int fac = 1;
+
+            int y;
+            //Calculate the factorial of selected block size
+            for (y = block; y > 0; y--){
+                fac *= y;
+            }
+
+            //Find n! permutations
+            permute(permutations, 0, block, fac);
+
+            //Loop through all possible combinations
+            for (z = 0; z < fac; z++) {
+                strcpy(tmp, str);
+                //Decrypt cipher text based on selected combination in this run
+                decryptTransp(tmp, permset[z], x);
+
+                for (j = 0; j < length-8; j++) { //Find encrypted 'computer' or 'security' in text
+                    if ((tmp[j]==string_1[0] && tmp[j+1]==string_1[1] && tmp[j+2]==string_1[2] && tmp[j+3]==string_1[3]
+                        && tmp[j+4]==string_1[4] && tmp[j+5]==string_1[5] && tmp[j+6]==string_1[6] && tmp[j+7]==string_1[7]) ||
+                        (tmp[j]==string_2[0] && tmp[j+1]==string_2[1] && tmp[j+2]==string_2[2] && tmp[j+3]==string_2[3]
+                        && tmp[j+4]==string_2[4] && tmp[j+5]==string_2[5] && tmp[j+6]==string_2[6] && tmp[j+7]==string_2[7])){
+                            key = key;
+                            flag = 1;
+                            break;
+                        }
+                }
+                run ++;
+                if (flag){
+                    break;
+                }
+            }
+            blockSize = x;
             if (flag){
                 break;
             }
         }
         row = z;
-        run = z * (i + 1);
+        printf("Block size found: %d\n", blockSize);
         int *perm = permset[z];
         printf("Permutations found: ");
-        for (j = 0; j < BLOCK; j++){
+        for (j = 0; j < blockSize; j++){
             printf("%d ", perm[j]);
         }
         printf("\n");
@@ -638,7 +687,7 @@ char* decryptProdNoKey (char * string, int permutations[BLOCK]){
             break;
         }
     }
-    strcpy(string,decryptTransp(string,permset[row]));
+    strcpy(string,decryptTransp(string,permset[row],x));
     decryptSub(string, key);
     printf("Key found: %d\n", key);
     printf("Number of runs: %d\n", run);
@@ -646,12 +695,12 @@ char* decryptProdNoKey (char * string, int permutations[BLOCK]){
 }
 
 
-void permute(int * per, int i, int length){
+void permute(int * per, int i, int length, int fac){
     int j;
     if (length == i) {
         //Store to permset
         for (i = 0; i < length; i++) {
-            if (k < FAC8)
+            if (k < fac)
                 permset[k][i] = per[i];
         }
         k++;
@@ -660,7 +709,7 @@ void permute(int * per, int i, int length){
         for (j = i; j < length; j++)
         {
             swap((per+j), (per+i));
-            permute(per, i+1, length);
+            permute(per, i+1, length, fac);
             swap((per+i), (per+j)); //Backtrack
         }
     }
@@ -690,12 +739,12 @@ void allEncrypt(char * str, int permutations[BLOCK]) {
     //Transposition cipher
     int permutations1[BLOCK];
     printf("\nEncrypted text:\n%s\n", encryptTransp(str2, permutations1));
-    printf("\nDecrypted text:\n%s\n\n", decryptTransp(str2, permutations1));
+    printf("\nDecrypted text:\n%s\n\n", decryptTransp(str2, permutations1, BLOCK));
     printf("---------------PRODUCT CIPHER---------------\n");
     //Product cipher
     int permutations2[BLOCK];
     printf("\nEncrypted text:\n%s\n", encryptTransp(encryptSub(str3, SHIFT), permutations2));
-    printf("\nDecrypted text:\n%s\n\n", decryptSub(decryptTransp(str3, permutations2), SHIFT));
+    printf("\nDecrypted text:\n%s\n\n", decryptSub(decryptTransp(str3, permutations2, BLOCK), SHIFT));
 }
 
 void readFile(const char * filename, char * str) {
