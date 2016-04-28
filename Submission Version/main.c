@@ -255,6 +255,7 @@ int decryptSubNoKey(char * string) {
     while(array[i]!=NULL){
         array[++i] = strtok(NULL," ");
     }
+    printf("%d\n",i);
 
     int j;
     int lengthEight = 0;
@@ -265,6 +266,7 @@ int decryptSubNoKey(char * string) {
             lengthEight ++;
         }
     }
+
 
     char *stringEight [lengthEight];
     i = 0;

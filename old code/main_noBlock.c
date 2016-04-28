@@ -9,7 +9,7 @@
 #define STRSIZE 4096
 #define SHIFT 9
 #define INSIZE 50
-#define BLOCK 9
+#define BLOCK 4
 #define FACMAX 362880
 #define BLOCKMAX 9
 
